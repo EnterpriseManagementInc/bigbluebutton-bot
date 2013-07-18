@@ -1,5 +1,7 @@
+*.project
+*.DS_STORE
 *.class
-
+*.log
 # Package Files #
 *.jar
 *.war

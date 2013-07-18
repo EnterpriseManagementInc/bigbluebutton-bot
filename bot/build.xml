@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="bbbot" basedir=".">    
+
+    <!-- ========================= MAVEN ============================ -->
+    
+    <target name="mvn-init" unless="compile.classpath" xmlns:artifact="urn:maven-artifact-ant">    
+        <typedef resource="org/apache/maven/artifact/ant/antlib.xml" uri="urn:maven-artifact-ant" 
+            classpath="build/maven-ant-tasks.jar"/> 
+        <condition property="maven.repo.local" value="${maven.repo.local}" else="${user.home}/.m2/repository">
+            <isset property="maven.repo.local"/>
+        </condition>        
+        <artifact:localRepository id="local.repository" path="${maven.repo.local}"/> 
+        <artifact:pom file="pom.xml" id="maven.project"/>
+        <artifact:dependencies pathId="compile.classpath" filesetId="compile.fileset" useScope="compile">
+            <pom refid="maven.project"/>
+            <localRepository refid="local.repository"/>
+        </artifact:dependencies>
+        <artifact:dependencies pathId="test.classpath" filesetId="test.fileset" useScope="test">
+            <pom refid="maven.project"/>
+            <localRepository refid="local.repository"/>
+        </artifact:dependencies>
+        <artifact:dependencies pathId="runtime.classpath" filesetId="runtime.fileset" useScope="runtime">
+            <pom refid="maven.project"/>
+            <localRepository refid="local.repository"/>
+        </artifact:dependencies>
+	</target>
+    
+    <!-- ========================= BUILD ============================ -->
+    
+    <target name="clean">
+        <delete includeemptydirs="true" failonerror="false">
+            <fileset dir="target"/>
+        </delete>      
+    </target>        
+    
+    <target name="compile" depends="mvn-init">
+		<ant dir="../flazr/" target="dist"/>
+		<ant dir="../bbb-java/" target="dist"/>
+    	<mkdir dir="target/${ant.project.name}/lib"/>
+		<copy todir="target/${ant.project.name}/lib">
+    		<fileset dir="../flazr/target/flazr/lib" />
+			<fileset dir="../bbb-java/target/bbb-java/lib" />
+		</copy>
+        <mkdir dir="target/classes"/>        
+	    <javac srcdir="src/main/java" destdir="target/classes" debug="true" 
+	        source="1.6" target="1.6" includeantruntime="false">
+			<classpath>
+				<fileset dir="target/${ant.project.name}/lib" />
+			    <path refid="compile.classpath"/>
+			</classpath>
+		</javac>
+        <copy todir="target/classes">
+            <fileset dir="src/main/java" excludes="**/*.java"/>
+        </copy>         
+        <copy todir="target/classes" failonerror="false">
+            <fileset dir="src/main/resources"/>
+        </copy>              
+    </target>
+    
+    <target name="compile-test" depends="compile">   
+        <mkdir dir="target/test-classes"/>
+        <javac srcdir="src/test/java" destdir="target/test-classes" debug="true" 
+            source="1.6" target="1.6" includeantruntime="false">
+            <classpath>
+                <path path="target/classes"/>
+                <path refid="test.classpath"/>
+            </classpath>
+        </javac>
+        <copy todir="target/test-classes">
+            <fileset dir="src/test/java" excludes="**/*.java"/>
+        </copy>      
+    </target> 
+        
+    <!-- ========================= DIST ============================ -->
+
+    <target name="dist-input-version">
+        <!--input message="Release Version:" addproperty="version"/-->
+		<property name="version" value="git" />
+    </target>
+
+    <target name="dist" depends="dist-input-version, compile">
+        <copy todir="target/${ant.project.name}/lib" flatten="true">            
+            <fileset refid="runtime.fileset"/>
+            <fileset refid="test.fileset"/>
+        </copy>
+        <jar destfile="bin/${ant.project.name}.jar">
+		    <fileset dir="target/classes" excludes="log4j.properties"/>
+		    <restrict>
+				<name name="**/*.class"/>
+				<archives>
+					<zips>
+						<fileset dir="target/${ant.project.name}/lib" includes="**/*.jar"/>
+					</zips>
+				</archives>
+		    </restrict>
+            <manifest>
+                <attribute name="Main-Class" value="org.mconf.bbb.bot.BotLauncher"/>
+            	<attribute name="Class-Path" value="."/>
+            </manifest>	
+        </jar>
+        <path id="lib.jars">
+            <path location="target/${ant.project.name}/conf"/>
+            <fileset dir="target/${ant.project.name}/lib"/>
+        </path>
+        <pathconvert targetos="unix" property="lib.jars.path.unix" refid="lib.jars">
+            <map from="${basedir}/target/${ant.project.name}/conf" to="conf"/>
+            <map from="${basedir}/target/${ant.project.name}/lib" to="lib"/>
+        </pathconvert>
+        <pathconvert targetos="windows" property="lib.jars.path.windows" refid="lib.jars">
+            <map from="${basedir}/target/${ant.project.name}/conf" to="conf"/>
+            <map from="${basedir}/target/${ant.project.name}/lib" to="lib"/>            
+        </pathconvert>
+        <zip destfile="target/${ant.project.name}-${version}.zip">
+            <zipfileset dir="target/${ant.project.name}" excludes="home/apps/vod/*" prefix="${ant.project.name}-${version}"/>
+        </zip>      
+    </target>
+</project>
