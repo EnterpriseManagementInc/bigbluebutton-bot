@@ -82,11 +82,17 @@ public class PresentModule extends Module implements ISharedObjectListener {
 		try {
 			HttpResponse httpResponse = client.execute(method);
 		
-			if (httpResponse.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+			if (httpResponse.getStatusLine().getStatusCode() == 500) {
+				log.debug("Slides not ready yet. Waiting for conversion.");
+			} else if (httpResponse.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
 				log.error("HTTP GET {} return {}", url, httpResponse.getStatusLine().getStatusCode());
-			// TODO parse out the slide info from result rather than just guessing slide info (i.e. textfile/1)
 			} else {
+				// TODO parse out the slide info from result rather than just guessing slide info (i.e. textfile/1)
 				result = EntityUtils.toString(httpResponse.getEntity()).trim();
+
+				loadSlideContent("thumbnail");
+				loadSlideContent("textfile");
+				loadSlideContent("slide");
 			}
 		} catch (ClientProtocolException pe) {
 			log.error("Client Protocol Exception", pe);
@@ -95,10 +101,6 @@ public class PresentModule extends Module implements ISharedObjectListener {
 		} catch (Exception e) { // there are undeclared exceptions thrown by client.execute
 			log.error("Unknown exception", e);
 		}
-
-		loadSlideContent("thumbnail");
-		loadSlideContent("textfile");
-		loadSlideContent("slide");
 	}
 		
 	private void loadSlideContent(String contentType) {
@@ -165,7 +167,7 @@ public class PresentModule extends Module implements ISharedObjectListener {
 	@Override
 	public void onSharedObjectClear(ISharedObjectBase so) {
 		log.debug("onSharedObjectClear");
-		doGetPresentationInfo();
+		this.doGetPresentationInfo();
 	}
 
 	@Override
@@ -180,6 +182,8 @@ public class PresentModule extends Module implements ISharedObjectListener {
 		} else if (method.equals("generatedSlideUpdateMessageCallback") && params != null) {
 
 		} else if (method.equals("conversionCompletedUpdateMessageCallback") && params != null) {
+			presentationName = (String) params.get(3);
+			slideNumber = 1;
 			loadPresentation();
 		} else if (method.equals("gotoSlideCallback") && params != null) {
 			slideNumber = ((Double)params.get(0)).intValue()+1;
