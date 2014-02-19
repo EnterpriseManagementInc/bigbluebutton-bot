@@ -132,7 +132,10 @@ public class MainRtmpConnection extends RtmpConnection {
 		args.add(meeting.getInternalUserID());
 		if (meeting.isGuestDefined())
 			args.add(meeting.isGuest());
-		
+        args.add(false);
+        args.add(false);
+        args.add(false);
+
 		options.setArgs(args.toArray());
 		
 		writeCommandExpectingResult(e.getChannel(), Command.connect(options));

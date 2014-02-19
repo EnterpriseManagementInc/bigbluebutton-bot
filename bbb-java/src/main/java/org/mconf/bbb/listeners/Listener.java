@@ -21,7 +21,7 @@ public class Listener implements IListener {
 		cidNum = (String) params.get(2);
 		muted = (Boolean) params.get(3);
 		talking = (Boolean) params.get(4);
-		locked = (Boolean) params.get(5);
+		//locked = (Boolean) params.get(5);
 	}
 
 	public Listener(Map<String, Object> attributes) {
@@ -29,7 +29,7 @@ public class Listener implements IListener {
 		nameAndIdSetting((String) attributes.get("name"));
 		talking = (Boolean) attributes.get("talking");					
 		muted = (Boolean) attributes.get("muted");					
-		locked = (Boolean) attributes.get("locked");
+		//locked = (Boolean) attributes.get("locked");
 	}
 	
 	

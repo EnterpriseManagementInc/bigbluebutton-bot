@@ -5,3 +5,7 @@
 # Package Files #
 *.war
 *.ear
+.idea
+*.iml
+target
+bot/bin/bbbot.jar

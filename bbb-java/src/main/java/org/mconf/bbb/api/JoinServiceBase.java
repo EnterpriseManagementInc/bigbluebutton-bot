@@ -275,7 +275,7 @@ public abstract class JoinServiceBase {
 	protected static String checksum(String s) {
 		String checksum = "";
 		try {
-			checksum = DigestUtils.shaHex(s);
+			checksum = DigestUtils.sha256Hex(s);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
